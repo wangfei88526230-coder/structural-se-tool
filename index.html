@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b6bcb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="结构性SE" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>儿童结构性SE与远视储备参考</title>
+  <style>
+    :root{--bg:#f4f7fb;--card:#fff;--text:#17202a;--muted:#667085;--accent:#0b6bcb;--border:#d9e2ec}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:620px;margin:0 auto;padding:22px 16px 40px}
+    h1{font-size:27px;margin:8px 0 6px}
+    .sub{color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin:14px 0;box-shadow:0 6px 20px rgba(17,24,39,.05)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .eye{font-weight:700;font-size:18px;margin-bottom:12px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input,select{width:100%;font-size:20px;padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff;outline:none}
+    input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(11,107,203,.12)}
+    button{width:100%;border:0;border-radius:14px;padding:14px 16px;font-size:17px;font-weight:700;background:var(--accent);color:#fff;margin-top:8px}
+    .results{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+    .metric{background:#f7faff;border-radius:14px;padding:12px}
+    .metric .k{color:var(--muted);font-size:12px;margin-bottom:5px}
+    .metric .v{font-weight:750;font-size:21px}
+    .sebox{margin-top:10px;border-radius:14px;padding:14px;background:#eef6ff;border:1px solid #cfe4ff}
+    .sebox .k{font-size:13px;color:var(--muted)}
+    .sebox .v{font-size:30px;font-weight:800;margin-top:3px}
+    .compare{margin-top:10px;border-radius:14px;padding:14px;background:#fafafa;border:1px solid var(--border)}
+    .compare .line{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
+    .compare .key{color:var(--muted)}
+    .compare .val{font-weight:700}
+    .formula{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;background:#f8fafc;border-radius:12px;padding:12px;overflow:auto}
+    .note{font-size:13px;line-height:1.65;color:var(--muted)}
+    .small{font-size:12px;color:var(--muted)}
+    .error{color:#b42318;font-size:13px;margin-top:10px;display:none}
+    @media(max-width:420px){.grid,.results{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>儿童结构性 SE 估算</h1>
+  <div class="sub">输入年龄、眼轴 AL 与角膜 K1、K2；自动显示结构性 SE、该年龄参考远视储备及两者差值。所有计算均在本机完成。</div>
+
+  <div class="card">
+    <label>年龄（整岁，3–12岁）</label>
+    <select id="age">
+      <option value="3">3岁</option><option value="4">4岁</option><option value="5">5岁</option>
+      <option value="6">6岁</option><option value="7" selected>7岁</option><option value="8">8岁</option>
+      <option value="9">9岁</option><option value="10">10岁</option><option value="11">11岁</option><option value="12">12岁</option>
+    </select>
+    <div class="compare" style="margin-top:12px">
+      <div class="line"><span class="key">该年龄参考远视储备</span><span class="val" id="age_hr">+1.74 D</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="eye">右眼 OD</div>
+    <div class="grid">
+      <div><label>AL（mm）</label><input id="od_al" inputmode="decimal" placeholder="例如 23.00"></div>
+      <div><label>K1（D）</label><input id="od_k1" inputmode="decimal" placeholder="例如 42.75"></div>
+      <div><label>K2（D）</label><input id="od_k2" inputmode="decimal" placeholder="例如 43.50"></div>
+    </div>
+    <div id="od_error" class="error"></div>
+    <div id="od_results" style="display:none">
+      <div class="results">
+        <div class="metric"><div class="k">平均K值</div><div class="v" id="od_km">—</div></div>
+        <div class="metric"><div class="k">CR（mm）</div><div class="v" id="od_cr">—</div></div>
+        <div class="metric"><div class="k">AL/CR</div><div class="v" id="od_ratio">—</div></div>
+      </div>
+      <div class="sebox"><div class="k">结构性 SE 估计</div><div class="v" id="od_se">—</div></div>
+      <div class="compare">
+        <div class="line"><span class="key">年龄参考远视储备</span><span class="val" id="od_hr">—</span></div>
+        <div class="line"><span class="key">结构性SE − 年龄参考</span><span class="val" id="od_diff">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="eye">左眼 OS</div>
+    <div class="grid">
+      <div><label>AL（mm）</label><input id="os_al" inputmode="decimal" placeholder="例如 22.90"></div>
+      <div><label>K1（D）</label><input id="os_k1" inputmode="decimal" placeholder="例如 42.50"></div>
+      <div><label>K2（D）</label><input id="os_k2" inputmode="decimal" placeholder="例如 43.25"></div>
+    </div>
+    <div id="os_error" class="error"></div>
+    <div id="os_results" style="display:none">
+      <div class="results">
+        <div class="metric"><div class="k">平均K值</div><div class="v" id="os_km">—</div></div>
+        <div class="metric"><div class="k">CR（mm）</div><div class="v" id="os_cr">—</div></div>
+        <div class="metric"><div class="k">AL/CR</div><div class="v" id="os_ratio">—</div></div>
+      </div>
+      <div class="sebox"><div class="k">结构性 SE 估计</div><div class="v" id="os_se">—</div></div>
+      <div class="compare">
+        <div class="line"><span class="key">年龄参考远视储备</span><span class="val" id="os_hr">—</span></div>
+        <div class="line"><span class="key">结构性SE − 年龄参考</span><span class="val" id="os_diff">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <button onclick="calcAll()">计算</button>
+
+  <div class="card">
+    <div class="formula">
+      Kmean = (K1 + K2) / 2<br>
+      CR(mm) = 337.5 / Kmean(D)<br>
+      AL/CR = AL × Kmean / 337.5<br>
+      SEest(D) = 36.463 − 12.278 × (AL/CR)<br>
+      差值 = SEest − 年龄参考远视储备
+    </div>
+    <p class="note">
+      “年龄参考远视储备”采用 Wang 等发表于 British Journal of Ophthalmology 的中国3–16岁儿童研究中，
+      通过1年屈光变化反向推算得到的年龄别参考值。该指标在原文中是<strong>平均标准值（mean）</strong>，
+      不是中位数，因此本工具明确标为“参考远视储备”，避免误称为中位数。
+    </p>
+    <p class="note">
+      3–12岁参考值依次为：3岁 +2.64 D、4岁 +2.45 D、5岁 +2.26 D、6岁 +2.08 D、
+      7岁 +1.74 D、8岁 +1.49 D、9岁 +1.24 D、10岁 +1.04 D、11岁 +0.95 D、12岁 +0.73 D。
+    </p>
+    <p class="note">
+      SEest 是依据 AL/CR 回归关系得到的结构性屈光度估计，并非散瞳验光结果；差值也不是经过前瞻验证的个体近视风险阈值，
+      仅用于临床辅助比较，不应作为独立诊断或治疗依据。
+    </p>
+    <div class="small">版本 1.1 · 离线计算 · 不保存患者数据</div>
+  </div>
+</div>
+
+<script>
+const HR={3:2.64,4:2.45,5:2.26,6:2.08,7:1.74,8:1.49,9:1.24,10:1.04,11:0.95,12:0.73};
+
+function signed(x){return (x>=0?"+":"")+x.toFixed(2)+" D";}
+function num(id){return parseFloat(document.getElementById(id).value);}
+function currentHR(){return HR[parseInt(document.getElementById("age").value)];}
+
+function updateAgeRef(){
+  document.getElementById("age_hr").textContent=signed(currentHR());
+  ["od","os"].forEach(p=>{
+    if(document.getElementById(p+"_results").style.display!=="none") calcEye(p);
+  });
+}
+
+function calcEye(prefix){
+  const al=num(prefix+"_al"),k1=num(prefix+"_k1"),k2=num(prefix+"_k2");
+  const err=document.getElementById(prefix+"_error");
+  const res=document.getElementById(prefix+"_results");
+  err.style.display="none";res.style.display="none";
+
+  if([al,k1,k2].some(v=>Number.isNaN(v))){
+    err.textContent="请完整输入 AL、K1、K2。";err.style.display="block";return;
+  }
+  if(al<18||al>30||k1<30||k1>60||k2<30||k2>60){
+    err.textContent="输入值超出常见生理范围，请核对单位和数值。";err.style.display="block";return;
+  }
+
+  const km=(k1+k2)/2;
+  const cr=337.5/km;
+  const ratio=al/cr;
+  const se=36.463-12.278*ratio;
+  const h=currentHR();
+  const diff=se-h;
+
+  document.getElementById(prefix+"_km").textContent=km.toFixed(2)+" D";
+  document.getElementById(prefix+"_cr").textContent=cr.toFixed(3)+" mm";
+  document.getElementById(prefix+"_ratio").textContent=ratio.toFixed(3);
+  document.getElementById(prefix+"_se").textContent=signed(se);
+  document.getElementById(prefix+"_hr").textContent=signed(h);
+  document.getElementById(prefix+"_diff").textContent=signed(diff);
+  res.style.display="block";
+}
+
+function calcAll(){calcEye("od");calcEye("os");}
+document.getElementById("age").addEventListener("change",updateAgeRef);
+["od_al","od_k1","od_k2","os_al","os_k1","os_k2"].forEach(id=>{
+  document.getElementById(id).addEventListener("keydown",e=>{if(e.key==="Enter")calcAll();});
+});
+updateAgeRef();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"));
+}
+</script>
+</body>
+</html>
